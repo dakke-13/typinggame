@@ -1,0 +1,17 @@
+{
+  "name": "my-first-product",
+  "version": "1.0.0",
+  "description": "挑戦",
+  "main": "src/app.js",
+  "author": "aihara",
+  "license": "MIT",
+  "scripts": {
+    "start": "NODE_ENV=\"development\" node --watch src/server.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.2",
+    "@hono/oauth-providers": "0.8.0",
+    "hono": "^4.7.10",
+    "iron-session": "8.0.1"
+  }
+}
