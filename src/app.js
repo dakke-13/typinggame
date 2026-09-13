@@ -45,6 +45,7 @@ app.use(async (c, next) => {
   const setCookieHeader = dummyRes.headers.get('set-cookie');
   if (setCookieHeader) {
     c.res.headers.append('set-cookie', setCookieHeader);
+    }
 });
 
 //GitHub 認証
