@@ -13,6 +13,14 @@ services:
     build:
       context: "."
       dockerfile: "db.Dockerfile"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: my_first_product
+    volumes:
+      - my-first-product-data:/var/lib/postgresql/data
 
 volumes:
   node_modules:
+  my-first-product-data:
+    external: true

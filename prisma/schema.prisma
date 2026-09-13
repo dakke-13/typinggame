@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId   Int     @id
+  username String  @unique @db.VarChar(255)
+  scores   Score[]
+
+  @@map(name: "users")
+}
+
+model Score {
+  scoreId     String   @id @db.Uuid
+  typingScore Int
+  createdBy   Int
+  updatedAt   DateTime @db.Timestamptz(6)
+  user        User     @relation(fields: [createdBy], references: [userId], onDelete: Cascade)
+
+  @@index(fields: [createdBy])
+  @@map(name: "scores")
+}
+
+model WordRequest {
+  id        String    @id @default(uuid())
+  en        String
+  ja        String
+  createdAt DateTime @default(now()) 
+}
