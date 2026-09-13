@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "NODE_ENV=\"development\" node --env-file .env --watch src/server.js",
-    "build": "prisma generate && prisma migrate deploy",
+    "build": "npx prisma generate && npx prisma migrate deploy",
     "test": "jest --setupFiles dotenv/config"
   },
   "dependencies": {
