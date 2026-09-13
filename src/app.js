@@ -33,6 +33,9 @@ app.use(async (c, next) => {
   const session = await getIronSession(c.req.raw, c.res, {
     password: SESSION_PASSWORD,
     cookieName: 'session',
+    cookieOptions: {
+      secure: process.env.NODE_ENV === "production", 
+  },
   });
   c.set('session', session);
   await next();
