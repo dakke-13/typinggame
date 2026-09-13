@@ -30,6 +30,9 @@ app.use(trimTrailingSlash());
 // セッション管理用のミドルウェア
 app.use(async (c, next) => {
   const { SESSION_PASSWORD } = env(c);
+
+  const dummyRes = new Response();
+
   const session = await getIronSession(c.req.raw, c.res, {
     password: SESSION_PASSWORD,
     cookieName: 'session',
@@ -39,6 +42,9 @@ app.use(async (c, next) => {
   });
   c.set('session', session);
   await next();
+  const setCookieHeader = dummyRes.headers.get('set-cookie');
+  if (setCookieHeader) {
+    c.res.headers.append('set-cookie', setCookieHeader);
 });
 
 //GitHub 認証
