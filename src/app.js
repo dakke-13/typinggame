@@ -30,22 +30,31 @@ app.use(trimTrailingSlash());
 // セッション管理用のミドルウェア
 app.use(async (c, next) => {
   const { SESSION_PASSWORD } = env(c);
-
   const dummyRes = new Response();
-
-  const session = await getIronSession(c.req.raw, c.res, {
+  
+  const session = await getIronSession(c.req.raw, dummyRes, {
     password: SESSION_PASSWORD,
     cookieName: 'session',
     cookieOptions: {
-      secure: process.env.NODE_ENV === "production", 
-  },
+      // 念のため、Render環境であることをより確実に判定する書き方に強化します
+      secure: process.env.NODE_ENV === "production" || process.env.RENDER === "true",
+      httpOnly: true,
+      sameSite: "lax"
+    },
   });
+  
   c.set('session', session);
   await next();
-  const setCookieHeader = dummyRes.headers.get('set-cookie');
-  if (setCookieHeader) {
-    c.res.headers.append('set-cookie', setCookieHeader);
-    }
+  
+  const setCookieValue = dummyRes.headers.get('set-cookie');
+  if (setCookieValue) {
+    // 💡 今回の修正ポイント 💡
+    // リダイレクトの「カチカチのレスポンス」を、コピーして「編集可能なレスポンス」に作り直します！
+    c.res = new Response(c.res.body, c.res);
+    
+    // そのうえでCookieを貼り付けます！
+    c.res.headers.append('set-cookie', setCookieValue);
+  }
 });
 
 //GitHub 認証
