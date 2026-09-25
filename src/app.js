@@ -28,32 +28,53 @@ app.use(secureHeaders());
 app.use(trimTrailingSlash());
 
 // セッション管理用のミドルウェア
+// セッション管理用のミドルウェア
 app.use(async (c, next) => {
   const { SESSION_PASSWORD } = env(c);
   const dummyRes = new Response();
   
   const session = await getIronSession(c.req.raw, dummyRes, {
     password: SESSION_PASSWORD,
-    cookieName: 'session',
+    // 💡 名前を変えて、古い壊れたCookieの影響をリセットします
+    cookieName: 'miku-session-v2',
     cookieOptions: {
-      // 念のため、Render環境であることをより確実に判定する書き方に強化します
-      secure: process.env.NODE_ENV === "production" || process.env.RENDER === "true",
+      secure: true, // Render（本番環境）確定なので true に固定します！
       httpOnly: true,
-      sameSite: "lax"
+      sameSite: "lax",
+      path: '/'
     },
   });
   
   c.set('session', session);
   await next();
   
-  const setCookieValue = dummyRes.headers.get('set-cookie');
-  if (setCookieValue) {
-    // 💡 今回の修正ポイント 💡
-    // リダイレクトの「カチカチのレスポンス」を、コピーして「編集可能なレスポンス」に作り直します！
-    c.res = new Response(c.res.body, c.res);
+  // 💡 ここからが「絶対にCookieをこぼさない」ための新しい移し替え処理です 💡
+  let setCookies = [];
+  
+  // Node.jsの最新仕様（getSetCookie）が使える場合はそれを使う
+  if (typeof dummyRes.headers.getSetCookie === 'function') {
+    setCookies = dummyRes.headers.getSetCookie();
+  } else {
+    const cookieStr = dummyRes.headers.get('set-cookie');
+    if (cookieStr) setCookies = [cookieStr];
+  }
+
+  // 念のため、何が取得できたかRenderのログに出力する（これで原因が丸裸になります）
+  console.log("【チェック】ダミーから取り出したCookie:", setCookies);
+
+  // Cookieが存在していれば、本物のレスポンスに貼り付ける
+  if (setCookies.length > 0) {
+    const newHeaders = new Headers(c.res.headers);
+    for (const cookie of setCookies) {
+      newHeaders.append('set-cookie', cookie);
+    }
     
-    // そのうえでCookieを貼り付けます！
-    c.res.headers.append('set-cookie', setCookieValue);
+    // ヘッダーを新しくした完全なレスポンスを作り直して、c.res に上書き！
+    c.res = new Response(c.res.body, {
+      status: c.res.status,
+      statusText: c.res.statusText,
+      headers: newHeaders
+    });
   }
 });
 
